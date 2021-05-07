@@ -15,6 +15,11 @@
 * `--fps 6` to specify the frames per second of the output video. Default: 6 fps
 * These 2 args will affect the speed and noisy-ness of the latent walk: `--initial_learning_rate=0.05  --initial_noise_factor 0.1`
 
+#### To extract frames from the video
+You can use the command-line tool FFMPEG to extract 3 frames from the video:
+`ffmpeg -i proj_steps80_6fps.mp4 -vf select='eq(n\,40)+eq(n\,50)+eq(n\,79)' -vsync 0 out%d.jpg`
+where -i is the name of the input video. The above command will output frames 40, 50, and 79 from the video and save them out as out1.jpg, out2.jpg, and out3.jpg.
+
 ----------------
 
 # Original README from Derrick Schultz's repo
