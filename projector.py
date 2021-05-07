@@ -261,7 +261,7 @@ def _str_to_bool(v):
 
 _examples = '''examples:
 
-  python %(prog)s --outdir=out --target=targetimg.png \\
+  python %(prog)s --output_path=out --image_path=targetimg.png \\
       --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
 '''
 
@@ -275,10 +275,10 @@ def main():
     )
 
     parser.add_argument('--network',     help='Network pickle filename', dest='network_pkl', required=True)
-    parser.add_argument('--target',      help='Target image file to project to', dest='target_fname', required=True)
+    parser.add_argument('--image_path',      help='Target image file to project to', dest='target_fname', required=True)
     parser.add_argument('--save-video',  help='Save an mp4 video of optimization progress (default: true)', type=_str_to_bool, default=True)
     parser.add_argument('--seed',        help='Random seed', type=int, default=303)
-    parser.add_argument('--outdir',      help='Where to save the output images', required=True, metavar='DIR')
+    parser.add_argument('--output_path',      help='Where to save the output images', required=True, dest='outdir', metavar='DIR')
     project(**vars(parser.parse_args()))
 
 #----------------------------------------------------------------------------
