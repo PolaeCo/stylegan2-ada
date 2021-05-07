@@ -1,3 +1,18 @@
+
+#Installation 
+
+Download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
+
+```
+pip install opensimplex
+
+```
+Use Tensorflow V1.
+
+
+
+#Original README from Derrick Schultz's repo
+----------------
 ## PyTorch notice
 I’ll likely be moving all features from this repo to the [PyTorch version](https://github.com/dvschultz/stylegan2-ada-pytorch). That will take time, so until then this remains the best repo to use for full features.
 
