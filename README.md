@@ -7,14 +7,13 @@
 
 
 # Usage
-```
-python projector.py --output_path="./projection" --image_path=/content/user_00_512.jpg --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
-```
+`python projector.py --output_path="./projection" --image_path=/content/user_00_512.jpg --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl`
 
 #### Additional Optional Args
 
-* `--num_steps=150` to specify the number of steps to take in the projection.
-* These will affect the speed and noisy-ness of the latent walk: `--initial_learning_rate=0.05  --initial_noise_factor 0.1`
+* `--num_steps 80` to specify the number of steps to take in the projection. Default: 80 steps
+* `--fps 6` to specify the frames per second of the output video. Default: 6 fps
+* These 2 args will affect the speed and noisy-ness of the latent walk: `--initial_learning_rate=0.05  --initial_noise_factor 0.1`
 
 ----------------
 
