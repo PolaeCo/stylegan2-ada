@@ -59,6 +59,12 @@ class Projector:
         if self.verbose:
             print('Projector:', *args)
 
+    def set_num_steps(self, num_steps):
+        self.num_steps = num_steps
+
+    def set_initial_noise_factor(self, initial_noise_factor):
+        self.initial_noise_factor = initial_noise_factor
+
     def set_network(self, Gs, dtype='float16'):
         if Gs is None:
             self._Gs = None
@@ -202,7 +208,7 @@ class Projector:
 
 #----------------------------------------------------------------------------
 
-def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, seed: int):
+def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, seed: int, num_steps: int, initial_noise_factor: float, initial_learning_rate: float):
     # Load networks.
     tflib.init_tf({'rnd.np_random_seed': seed})
     print('Loading networks from "%s"...' % network_pkl)
@@ -221,6 +227,8 @@ def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, 
 
     # Initialize projector.
     proj = Projector()
+    proj.set_initial_noise_factor(initial_noise_factor)
+    proj.set_num_steps(num_steps)
     proj.set_network(Gs)
     proj.start([target_float])
 
@@ -279,6 +287,10 @@ def main():
     parser.add_argument('--save-video',  help='Save an mp4 video of optimization progress (default: true)', type=_str_to_bool, default=True)
     parser.add_argument('--seed',        help='Random seed', type=int, default=303)
     parser.add_argument('--output_path',      help='Where to save the output images', required=True, dest='outdir', metavar='DIR')
+    parser.add_argument('--num_steps',        help='Number of steps to take in the projection', type=int, default=150) # default 1000 in original nvidia repo
+    parser.add_argument('--initial_noise_factor',     help='Initial noise factor in the projection', type=float, default=0.1) # default 0.05 in original nvidia repo
+    parser.add_argument('--initial_learning_rate',     help='Initial learning rate in the projection', type=float, default=0.1) # default 0.1 in original nvidia repo
+
     project(**vars(parser.parse_args()))
 
 #----------------------------------------------------------------------------
