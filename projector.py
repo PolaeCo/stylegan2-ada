@@ -208,7 +208,7 @@ class Projector:
 
 #----------------------------------------------------------------------------
 
-def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, seed: int, num_steps: int, initial_noise_factor: float, initial_learning_rate: float):
+def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, seed: int, num_steps: int, initial_noise_factor: float, initial_learning_rate: float, fps: int):
     # Load networks.
     tflib.init_tf({'rnd.np_random_seed': seed})
     print('Loading networks from "%s"...' % network_pkl)
@@ -237,7 +237,7 @@ def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, 
     target_pil.save(f'{outdir}/target.png')
     writer = None
     if save_video:
-        writer = imageio.get_writer(f'{outdir}/proj.mp4', mode='I', fps=60, codec='libx264', bitrate='16M')
+        writer = imageio.get_writer(f'{outdir}/proj.mp4', mode='I', fps=fps, codec='libx264', bitrate='16M')
 
     # Run projector.
     with tqdm.trange(proj.num_steps) as t:
@@ -290,6 +290,7 @@ def main():
     parser.add_argument('--num_steps',        help='Number of steps to take in the projection', type=int, default=150) # default 1000 in original nvidia repo
     parser.add_argument('--initial_noise_factor',     help='Initial noise factor in the projection', type=float, default=0.1) # default 0.05 in original nvidia repo
     parser.add_argument('--initial_learning_rate',     help='Initial learning rate in the projection', type=float, default=0.1) # default 0.1 in original nvidia repo
+    parser.add_argument('--fps',     help='Frames per second to save the output video', type=int, default=6) # default 60 in original nvidia repo
 
     project(**vars(parser.parse_args()))
 
