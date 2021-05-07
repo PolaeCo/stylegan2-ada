@@ -1,18 +1,24 @@
 
-#Installation 
+# Installation 
 
 Download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
 
-```
-pip install opensimplex
-
-```
+`pip install opensimplex`
 Use Tensorflow V1.
 
+# Usage
+```
+python projector.py --output_path="./projection" --image_path=/content/user_00_512.jpg --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
+```
 
+#### Additional Optional Args
+`--num_steps=150` to specify the number of steps to take in the projection.
 
-#Original README from Derrick Schultz's repo
+These will affect the speed and noisy-ness of the latent walk: `--initial_learning_rate=0.05  --initial_noise_factor 0.1`
 ----------------
+
+# Original README from Derrick Schultz's repo
+
 ## PyTorch notice
 I’ll likely be moving all features from this repo to the [PyTorch version](https://github.com/dvschultz/stylegan2-ada-pytorch). That will take time, so until then this remains the best repo to use for full features.
 
