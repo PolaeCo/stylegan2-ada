@@ -2,6 +2,7 @@
 # Installation 
 
 Download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
+
 Use Tensorflow V1.
 
 Also, `pip install opensimplex`.
