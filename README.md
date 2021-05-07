@@ -1,11 +1,9 @@
 
 # Installation 
 
-Download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
-
-Use Tensorflow V1.
-
-Also, `pip install opensimplex`.
+* Download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
+* Use Tensorflow V1.
+* Also, `pip install opensimplex`.
 
 
 # Usage
@@ -14,9 +12,10 @@ python projector.py --output_path="./projection" --image_path=/content/user_00_5
 ```
 
 #### Additional Optional Args
-`--num_steps=150` to specify the number of steps to take in the projection.
 
-These will affect the speed and noisy-ness of the latent walk: `--initial_learning_rate=0.05  --initial_noise_factor 0.1`
+* `--num_steps=150` to specify the number of steps to take in the projection.
+* These will affect the speed and noisy-ness of the latent walk: `--initial_learning_rate=0.05  --initial_noise_factor 0.1`
+
 ----------------
 
 # Original README from Derrick Schultz's repo
