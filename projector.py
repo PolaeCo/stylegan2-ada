@@ -287,7 +287,7 @@ def main():
     parser.add_argument('--save-video',  help='Save an mp4 video of optimization progress (default: true)', type=_str_to_bool, default=True)
     parser.add_argument('--seed',        help='Random seed', type=int, default=303)
     parser.add_argument('--output_path',      help='Where to save the output images', required=True, dest='outdir', metavar='DIR')
-    parser.add_argument('--num_steps',        help='Number of steps to take in the projection', type=int, default=150) # default 1000 in original nvidia repo
+    parser.add_argument('--num_steps',        help='Number of steps to take in the projection', type=int, default=80) # default 1000 in original nvidia repo
     parser.add_argument('--initial_noise_factor',     help='Initial noise factor in the projection', type=float, default=0.1) # default 0.05 in original nvidia repo
     parser.add_argument('--initial_learning_rate',     help='Initial learning rate in the projection', type=float, default=0.1) # default 0.1 in original nvidia repo
     parser.add_argument('--fps',     help='Frames per second to save the output video', type=int, default=60) # default 60 in original nvidia repo
