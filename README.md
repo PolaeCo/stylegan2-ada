@@ -1,12 +1,18 @@
 
 # Installation 
 
-* Download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
+* For projector.py, download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
+* For generate_from_vector.py, download the following pretrained models:
+    *  Toonify: https://drive.google.com/file/d/1-1fIbIoarJdr3QLKw0lZACwOPbidiJ3G/view?usp=sharing
+    *  Metfaces-FFHQ-64: https://drive.google.com/file/d/1jFnpXP3GbXg2opUXAbzPaMXYv1rfhomZ/view?usp=sharing
+    *  more soon!
 * Use Tensorflow V1.
 * Also, `pip install opensimplex`.
 
 
 # Usage
+
+## 1) Projector.py
 `python projector.py --output_path="./projection" --image_path=/content/user_00_512.jpg --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl`
 
 #### Additional Optional Args
@@ -16,13 +22,18 @@
 * These 2 args will affect the speed and noisy-ness of the latent walk: `--initial_learning_rate=0.05  --initial_noise_factor 0.1`
 
 
-#### To extract frames from the video
+#### 1.5) To extract frames from the video
 
 You can use the command-line tool FFMPEG to extract 3 frames from the video.
 
 `ffmpeg -i proj_steps80_6fps.mp4 -vf select='eq(n\,40)+eq(n\,50)+eq(n\,79)' -vsync 0 out%d.jpg`
 
 where -i is the name of the input video. The above command will output frames 40, 50, and 79 from the video and save them out as out1.jpg, out2.jpg, and out3.jpg.
+
+
+## 2) generate_from_vector.py
+`!python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
+
 
 ----------------
 
