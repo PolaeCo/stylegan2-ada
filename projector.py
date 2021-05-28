@@ -13,6 +13,7 @@ import os
 import pickle
 import imageio
 import time
+import json
 
 import numpy as np
 import PIL.Image
@@ -230,40 +231,33 @@ _examples = '''examples:
 
 #----------------------------------------------------------------------------
 
-def main():
-    parser = argparse.ArgumentParser(
-        description='Project given image to the latent space of pretrained network pickle.',
-        epilog=_examples,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
 
-    parser.add_argument('--network',     help='Network pickle filename', dest='network_pkl', required=True)
-    parser.add_argument('--image_path',      help='Target image file to project to', dest='target_fname', required=True)
-    parser.add_argument('--save-video',  help='Save an mp4 video of optimization progress (default: true)', type=_str_to_bool, default=True)
-    parser.add_argument('--seed',        help='Random seed', dest='seed', type=int, default=303)
-    parser.add_argument('--output_path',      help='Where to save the output images', required=True, dest='outdir', metavar='DIR')
-    parser.add_argument('--num_steps',        help='Number of steps to take in the projection', dest='num_steps', type=int, default=80) # default 1000 in original nvidia repo
-    # parser.add_argument('--initial_noise_factor',     help='Initial noise factor in the projection', type=float, default=0.1) # default 0.05 in original nvidia repo
-    # parser.add_argument('--initial_learning_rate',     help='Initial learning rate in the projection', type=float, default=0.1) # default 0.1 in original nvidia repo
-    parser.add_argument('--fps',     help='Frames per second to save the output video', dest='fps', type=int, default=60) # default 60 in original nvidia repo
+def recyclable_part(seed, network_pkl, num_steps):
+    # BEGIN RECYCLABLE PORTION 
 
-    # project(**vars(parser.parse_args()))
-
-    args = parser.parse_args()
-    network_pkl = args.network_pkl
-    target_fname = args.target_fname
-    outdir = args.outdir
-    save_video = args.save_video
-    seed = args.seed
-    num_steps = args.num_steps
-    fps = args.fps
-
+    time_recyclable_start = time.time()
 
     # Load networks.
     tflib.init_tf({'rnd.np_random_seed': seed})
     print('Loading networks from "%s"...' % network_pkl)
     with dnnlib.util.open_url(network_pkl) as fp:
         _G, _D, Gs = pickle.load(fp)
+
+
+    # Initialize projector.
+    proj = Projector()
+    proj.set_num_steps(num_steps)
+
+    proj.set_network(Gs)
+
+    time_recyclable_end = time.time()
+    print('Time to do recyclable / pre-init part took {:.4f} seconds.'.format(time_recyclable_end - time_recyclable_start))
+
+    return proj, Gs
+
+def configurable_part(target_fname, outdir, proj, Gs):
+    time_start = time.time()
+    FPS = 6
 
     # Load target image.
     target_pil = PIL.Image.open(target_fname)
@@ -276,35 +270,19 @@ def main():
     target_uint8 = np.array(target_pil, dtype=np.uint8)
     target_float = target_uint8.astype(np.float32).transpose([2, 0, 1]) * (2 / 255) - 1
 
-
-    # Initialize projector.
-    proj = Projector()
-    proj.set_num_steps(num_steps)
-
-    proj.set_network(Gs)
-
-#### BEGIN CONFIGURABLE PART
-    # SLEEP_TIME_IN_SECS = 0.05
-    #if ()
-
-    time_start = time.time()
-
-    # Set target img.
+    # Set target img in Projector.
     proj.start([target_float])
 
     # Setup output directory.
     os.makedirs(outdir, exist_ok=True)
     target_pil.save(f'{outdir}/target.png')
-    writer = None
-    if save_video:
-        writer = imageio.get_writer(f'{outdir}/proj.mp4', mode='I', fps=fps, codec='libx264', bitrate='16M')
+    writer = imageio.get_writer(f'{outdir}/proj.mp4', mode='I', fps=FPS, codec='libx264', bitrate='16M')
 
     # Run projector.
     with tqdm.trange(proj.num_steps) as t:
         for step in t:
             assert step == proj.cur_step
-            if writer is not None:
-                writer.append_data(proj.images_uint8[0])
+            writer.append_data(proj.images_uint8[0])
             dist, loss = proj.step()
             t.set_postfix(dist=f'{dist[0]:.4f}', loss=f'{loss:.2f}')
 
@@ -319,8 +297,50 @@ def main():
     time_end = time.time()
     print('Time to do configurable part of projection took {:.4f} seconds.'.format(time_end - time_start))
 
-    # else:
-    #     sleep(SLEEP_TIME_IN_SECS)
+def parse_json(json_path):
+    with open(json_path) as f:
+      json_dict = json.load(f)
+    return json_dict
+
+
+def main():
+
+    parser = argparse.ArgumentParser(
+        description='Project given image to the latent space of pretrained network pickle.',
+        epilog=_examples,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    parser.add_argument('--network',     help='Network pickle filename', dest='network_pkl', required=True)
+    parser.add_argument('--json_path',      help='File path to json arg file', dest='json_path', required=True)
+
+    args = parser.parse_args()
+
+#### BEGIN RECYCLABLE PART
+    network_pkl = args.network_pkl
+    num_steps = 80
+    seed = 303
+
+    proj, Gs = recyclable_part(seed, network_pkl, num_steps)
+
+#### END RECYCLABLE PART
+
+    while (True):
+
+        if os.path.exists(args.json_path):
+            # parse json
+            json_dict = parse_json(args.json_path)
+
+            # del json
+            print(f'Deleting JSON.')
+            os.remove(args.json_path)
+
+            configurable_part(json_dict['input_path'], json_dict['output_path'], proj, Gs)
+
+        else:
+            SLEEP_TIME_IN_SECS = 0.05
+            print(f'JSON not found. Sleeping {SLEEP_TIME_IN_SECS} seconds.')
+            time.sleep(SLEEP_TIME_IN_SECS)
 
 #----------------------------------------------------------------------------
 
