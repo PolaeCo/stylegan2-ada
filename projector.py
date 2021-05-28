@@ -22,6 +22,7 @@ import tqdm
 import dnnlib
 import dnnlib.tflib as tflib
 
+
 class Projector:
     def __init__(self):
         self.num_steps                  = 1000
@@ -62,9 +63,6 @@ class Projector:
 
     def set_num_steps(self, num_steps):
         self.num_steps = num_steps
-
-    def set_initial_noise_factor(self, initial_noise_factor):
-        self.initial_noise_factor = initial_noise_factor
 
     def set_network(self, Gs, dtype='float16'):
         if Gs is None:
@@ -209,86 +207,7 @@ class Projector:
 
 #----------------------------------------------------------------------------
 
-def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, seed: int, num_steps: int, initial_noise_factor: float, initial_learning_rate: float, fps: int):
-    
-    time_0 = time.time()
-    # Load networks.
-    tflib.init_tf({'rnd.np_random_seed': seed})
-    print('Loading networks from "%s"...' % network_pkl)
-    with dnnlib.util.open_url(network_pkl) as fp:
-        _G, _D, Gs = pickle.load(fp)
-
-    time_1 = time.time()
-    print('Time to load model took {:.4f} seconds.'.format(time_1 - time_0))
-
-    # Load target image.
-    target_pil = PIL.Image.open(target_fname)
-    time_2 = time.time()
-    print('Time to load input img {:.4f} seconds.'.format(time_2 - time_1))
-
-    w, h = target_pil.size
-    s = min(w, h)
-    target_pil = target_pil.crop(((w - s) // 2, (h - s) // 2, (w + s) // 2, (h + s) // 2))
-    target_pil= target_pil.convert('RGB')
-    target_pil = target_pil.resize((Gs.output_shape[3], Gs.output_shape[2]), PIL.Image.ANTIALIAS)
-    target_uint8 = np.array(target_pil, dtype=np.uint8)
-    target_float = target_uint8.astype(np.float32).transpose([2, 0, 1]) * (2 / 255) - 1
-    
-    time_3 = time.time()
-    print('Time to process input img for projector took {:.4f} seconds.'.format(time_3 - time_2))
-
-    # Initialize projector.
-    proj = Projector()
-    proj.set_initial_noise_factor(initial_noise_factor)
-    proj.set_num_steps(num_steps)
-
-    time_A = time.time()
-    proj.set_network(Gs)
-    time_B = time.time()
-    print('Time to set_network for projector took {:.4f} seconds.'.format(time_B - time_A))
-
-    proj.start([target_float])
-    time_C = time.time()
-    print('Time to set start for projector took {:.4f} seconds.'.format(time_C - time_B))
-
-    time_4 = time.time()
-    print('Total time to initialize projector took {:.4f} seconds.'.format(time_4 - time_3))
-
-
-    # Setup output directory.
-    os.makedirs(outdir, exist_ok=True)
-    target_pil.save(f'{outdir}/target.png')
-    writer = None
-    if save_video:
-        writer = imageio.get_writer(f'{outdir}/proj.mp4', mode='I', fps=fps, codec='libx264', bitrate='16M')
-
-    time_5 = time.time()
-    print('Time to setup output directory took {:.4f} seconds.'.format(time_5 - time_4))
-
-    # Run projector.
-    with tqdm.trange(proj.num_steps) as t:
-        for step in t:
-            assert step == proj.cur_step
-            if writer is not None:
-                writer.append_data(proj.images_uint8[0])
-            dist, loss = proj.step()
-            t.set_postfix(dist=f'{dist[0]:.4f}', loss=f'{loss:.2f}')
-
-    time_5 = time.time()
-    print('Time to run projector for ' + str(proj.num_steps) +' steps took {:.4f} seconds.'.format(time_5 - time_4))
-
-
-    # Save results.
-    PIL.Image.fromarray(proj.images_uint8[0], 'RGB').save(f'{outdir}/proj.png')
-    time_6 = time.time()
-    print('Time to save output projected image took {:.4f} seconds.'.format(time_6 - time_5))
-
-    np.savez(f'{outdir}/dlatents.npz', dlatents=proj.dlatents)
-    if writer is not None:
-        writer.close()
-
-    time_7 = time.time()
-    print('Time to save output .npz vector took {:.4f} seconds.'.format(time_7 - time_6))
+# def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, seed: int, num_steps: int, initial_noise_factor: float, initial_learning_rate: float, fps: int):
 
 #----------------------------------------------------------------------------
 
@@ -321,14 +240,87 @@ def main():
     parser.add_argument('--network',     help='Network pickle filename', dest='network_pkl', required=True)
     parser.add_argument('--image_path',      help='Target image file to project to', dest='target_fname', required=True)
     parser.add_argument('--save-video',  help='Save an mp4 video of optimization progress (default: true)', type=_str_to_bool, default=True)
-    parser.add_argument('--seed',        help='Random seed', type=int, default=303)
+    parser.add_argument('--seed',        help='Random seed', dest='seed', type=int, default=303)
     parser.add_argument('--output_path',      help='Where to save the output images', required=True, dest='outdir', metavar='DIR')
-    parser.add_argument('--num_steps',        help='Number of steps to take in the projection', type=int, default=80) # default 1000 in original nvidia repo
-    parser.add_argument('--initial_noise_factor',     help='Initial noise factor in the projection', type=float, default=0.1) # default 0.05 in original nvidia repo
-    parser.add_argument('--initial_learning_rate',     help='Initial learning rate in the projection', type=float, default=0.1) # default 0.1 in original nvidia repo
-    parser.add_argument('--fps',     help='Frames per second to save the output video', type=int, default=60) # default 60 in original nvidia repo
+    parser.add_argument('--num_steps',        help='Number of steps to take in the projection', dest='num_steps', type=int, default=80) # default 1000 in original nvidia repo
+    # parser.add_argument('--initial_noise_factor',     help='Initial noise factor in the projection', type=float, default=0.1) # default 0.05 in original nvidia repo
+    # parser.add_argument('--initial_learning_rate',     help='Initial learning rate in the projection', type=float, default=0.1) # default 0.1 in original nvidia repo
+    parser.add_argument('--fps',     help='Frames per second to save the output video', dest='fps', type=int, default=60) # default 60 in original nvidia repo
 
-    project(**vars(parser.parse_args()))
+    # project(**vars(parser.parse_args()))
+
+    args = parser.parse_args()
+    network_pkl = args.network_pkl
+    target_fname = args.target_fname
+    outdir = args.outdir
+    save_video = args.save_video
+    seed = args.seed
+    num_steps = args.num_steps
+    fps = args.fps
+
+
+    # Load networks.
+    tflib.init_tf({'rnd.np_random_seed': seed})
+    print('Loading networks from "%s"...' % network_pkl)
+    with dnnlib.util.open_url(network_pkl) as fp:
+        _G, _D, Gs = pickle.load(fp)
+
+    # Load target image.
+    target_pil = PIL.Image.open(target_fname)
+
+    w, h = target_pil.size
+    s = min(w, h)
+    target_pil = target_pil.crop(((w - s) // 2, (h - s) // 2, (w + s) // 2, (h + s) // 2))
+    target_pil= target_pil.convert('RGB')
+    target_pil = target_pil.resize((Gs.output_shape[3], Gs.output_shape[2]), PIL.Image.ANTIALIAS)
+    target_uint8 = np.array(target_pil, dtype=np.uint8)
+    target_float = target_uint8.astype(np.float32).transpose([2, 0, 1]) * (2 / 255) - 1
+
+
+    # Initialize projector.
+    proj = Projector()
+    proj.set_num_steps(num_steps)
+
+    proj.set_network(Gs)
+
+#### BEGIN CONFIGURABLE PART
+    # SLEEP_TIME_IN_SECS = 0.05
+    #if ()
+
+    time_start = time.time()
+
+    # Set target img.
+    proj.start([target_float])
+
+    # Setup output directory.
+    os.makedirs(outdir, exist_ok=True)
+    target_pil.save(f'{outdir}/target.png')
+    writer = None
+    if save_video:
+        writer = imageio.get_writer(f'{outdir}/proj.mp4', mode='I', fps=fps, codec='libx264', bitrate='16M')
+
+    # Run projector.
+    with tqdm.trange(proj.num_steps) as t:
+        for step in t:
+            assert step == proj.cur_step
+            if writer is not None:
+                writer.append_data(proj.images_uint8[0])
+            dist, loss = proj.step()
+            t.set_postfix(dist=f'{dist[0]:.4f}', loss=f'{loss:.2f}')
+
+
+    # Save results.
+    PIL.Image.fromarray(proj.images_uint8[0], 'RGB').save(f'{outdir}/proj.png')
+
+    np.savez(f'{outdir}/dlatents.npz', dlatents=proj.dlatents)
+    if writer is not None:
+        writer.close()
+
+    time_end = time.time()
+    print('Time to do configurable part of projection took {:.4f} seconds.'.format(time_end - time_start))
+
+    # else:
+    #     sleep(SLEEP_TIME_IN_SECS)
 
 #----------------------------------------------------------------------------
 
