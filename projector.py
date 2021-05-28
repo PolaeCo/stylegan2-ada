@@ -12,6 +12,7 @@ import argparse
 import os
 import pickle
 import imageio
+import time
 
 import numpy as np
 import PIL.Image
@@ -209,14 +210,22 @@ class Projector:
 #----------------------------------------------------------------------------
 
 def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, seed: int, num_steps: int, initial_noise_factor: float, initial_learning_rate: float, fps: int):
+    
+    time_0 = time.time()
     # Load networks.
     tflib.init_tf({'rnd.np_random_seed': seed})
     print('Loading networks from "%s"...' % network_pkl)
     with dnnlib.util.open_url(network_pkl) as fp:
         _G, _D, Gs = pickle.load(fp)
 
+    time_1 = time.time()
+    print('Time to load model took {:.4f} seconds.'.format(time_1 - time_0))
+
     # Load target image.
     target_pil = PIL.Image.open(target_fname)
+    time_2 = time.time()
+    print('Time to load input img {:.4f} seconds.'.format(time_2 - time_1))
+
     w, h = target_pil.size
     s = min(w, h)
     target_pil = target_pil.crop(((w - s) // 2, (h - s) // 2, (w + s) // 2, (h + s) // 2))
@@ -224,13 +233,27 @@ def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, 
     target_pil = target_pil.resize((Gs.output_shape[3], Gs.output_shape[2]), PIL.Image.ANTIALIAS)
     target_uint8 = np.array(target_pil, dtype=np.uint8)
     target_float = target_uint8.astype(np.float32).transpose([2, 0, 1]) * (2 / 255) - 1
+    
+    time_3 = time.time()
+    print('Time to process input img for projector took {:.4f} seconds.'.format(time_3 - time_2))
 
     # Initialize projector.
     proj = Projector()
     proj.set_initial_noise_factor(initial_noise_factor)
     proj.set_num_steps(num_steps)
+
+    time_A = time.time()
     proj.set_network(Gs)
+    time_B = time.time()
+    print('Time to set_network for projector took {:.4f} seconds.'.format(time_B - time_A))
+
     proj.start([target_float])
+    time_C = time.time()
+    print('Time to set start for projector took {:.4f} seconds.'.format(time_C - time_B))
+
+    time_4 = time.time()
+    print('Total time to initialize projector took {:.4f} seconds.'.format(time_4 - time_3))
+
 
     # Setup output directory.
     os.makedirs(outdir, exist_ok=True)
@@ -238,6 +261,9 @@ def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, 
     writer = None
     if save_video:
         writer = imageio.get_writer(f'{outdir}/proj.mp4', mode='I', fps=fps, codec='libx264', bitrate='16M')
+
+    time_5 = time.time()
+    print('Time to setup output directory took {:.4f} seconds.'.format(time_5 - time_4))
 
     # Run projector.
     with tqdm.trange(proj.num_steps) as t:
@@ -248,11 +274,21 @@ def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, 
             dist, loss = proj.step()
             t.set_postfix(dist=f'{dist[0]:.4f}', loss=f'{loss:.2f}')
 
+    time_5 = time.time()
+    print('Time to run projector for ' + str(proj.num_steps) +' steps took {:.4f} seconds.'.format(time_5 - time_4))
+
+
     # Save results.
     PIL.Image.fromarray(proj.images_uint8[0], 'RGB').save(f'{outdir}/proj.png')
+    time_6 = time.time()
+    print('Time to save output projected image took {:.4f} seconds.'.format(time_6 - time_5))
+
     np.savez(f'{outdir}/dlatents.npz', dlatents=proj.dlatents)
     if writer is not None:
         writer.close()
+
+    time_7 = time.time()
+    print('Time to save output projected image & output .npz vector took {:.4f} seconds.'.format(time_7 - time_6))
 
 #----------------------------------------------------------------------------
 
