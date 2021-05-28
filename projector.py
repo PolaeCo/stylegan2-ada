@@ -288,7 +288,7 @@ def project(network_pkl: str, target_fname: str, outdir: str, save_video: bool, 
         writer.close()
 
     time_7 = time.time()
-    print('Time to save output projected image & output .npz vector took {:.4f} seconds.'.format(time_7 - time_6))
+    print('Time to save output .npz vector took {:.4f} seconds.'.format(time_7 - time_6))
 
 #----------------------------------------------------------------------------
 
