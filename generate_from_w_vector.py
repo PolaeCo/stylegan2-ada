@@ -121,7 +121,7 @@ def process(input_path, output_path, verbose, preloaded_params):
 
     # GEN FROM W-SPACE: SLERP VIDEO
     time_0 = time.time()    
-    print('Generating spherical interpolation mp4, of 30 frames.')
+    print('Generating spherical interpolation mp4, of 30 frames...')
 
     ws_slerp = slerp_interpolate([w_user00_mat, w_last_mat], 30)
 
@@ -132,7 +132,7 @@ def process(input_path, output_path, verbose, preloaded_params):
 
 
     # GEN FROM W-SPACE: SAVE 10 NOISE IMGS
-    print('Generating 10 noise imgs.')
+    print('Generating 10 noise imgs...')
 
     ws_noise = []
     for i in range(10):
