@@ -1,5 +1,5 @@
 
-# Installation 
+## Installation 
 
 * For `projector.py` and `generate_from_w_vector.py`, download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
 * For `generate_from_vector.py`, download the following pretrained models:
@@ -10,31 +10,9 @@
 * Also, `pip install opensimplex`.
 
 
-# Usage
+## Usage
 
-## 1) Projector.py
-`python projector.py --output_path="./projection" --image_path=/content/user_00_512.jpg --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl`
-
-#### Additional Optional Args
-
-* `--num_steps 80` to specify the number of steps to take in the projection. Default: 80 steps
-* `--fps 6` to specify the frames per second of the output video. Default: 6 fps
-* These 2 args will affect the speed and noisy-ness of the latent walk: `--initial_learning_rate=0.05  --initial_noise_factor 0.1`
-
-
-#### 1.5) To extract frames from the video
-
-You can use the command-line tool FFMPEG to extract 3 frames from the video.
-
-`ffmpeg -i proj_steps80_6fps.mp4 -vf select='eq(n\,40)+eq(n\,50)+eq(n\,79)' -vsync 0 out%d.jpg`
-
-where -i is the name of the input video. The above command will output frames 40, 50, and 79 from the video and save them out as out1.jpg, out2.jpg, and out3.jpg.
-
-
-## 2) generate_from_vector.py, which will take a z-vector and generate 1 img from that z-vector from the specified network pkl.
-`python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
-
-## 3) generate_from_w_vector.py, which will take a w-vector and output 10 images and a slerp .mp4.
+### 1) generate_from_w_vector.py, which will take a w-vector and output 10 images and a slerp .mp4.
 
 `python generate_from_w_vector.py --verbose --sleep_time=1000 --network_path=/content/stylegan2-ada/ffhq.pkl --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
 
@@ -52,6 +30,29 @@ Here is a sample JSON:
 }
 ```
 When done, it will also create a file called `clonegan_seq_imgs_video.done` in the output path. 
+
+
+### 2) generate_from_vector.py, which will take a z-vector and generate 1 img from that z-vector from the specified network pkl.
+`python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
+
+
+### 3) projector.py, which will output an mp4 projection video.
+`python projector.py --output_path="./projection" --image_path=/content/user_00_512.jpg --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl`
+
+#### Additional Optional Args
+
+* `--num_steps 80` to specify the number of steps to take in the projection. Default: 80 steps
+* `--fps 6` to specify the frames per second of the output video. Default: 6 fps
+
+
+#### 3.5) To extract frames from the video
+
+You can use the command-line tool FFMPEG to extract 3 frames from the video.
+
+`ffmpeg -i proj_steps80_6fps.mp4 -vf select='eq(n\,40)+eq(n\,50)+eq(n\,79)' -vsync 0 out%d.jpg`
+
+where -i is the name of the input video. The above command will output frames 40, 50, and 79 from the video and save them out as out1.jpg, out2.jpg, and out3.jpg.
+
 
 
 ----------------
