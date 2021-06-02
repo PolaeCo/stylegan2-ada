@@ -1,0 +1,4 @@
+{
+   "input_path": "/content/restyle-encoder/test/w5_vector.npy",
+   "output_path": "/content/stylegan2-ada/out"
+}
