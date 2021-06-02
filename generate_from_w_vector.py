@@ -121,21 +121,18 @@ def process(input_path, output_path, verbose, preloaded_params):
 
     # GEN FROM W-SPACE: SLERP VIDEO
     time_0 = time.time()    
-    if verbose:
-        print('Generating spherical interpolation mp4, of 30 frames.')
+    print('Generating spherical interpolation mp4, of 30 frames.')
 
     ws_slerp = slerp_interpolate([w_user00_mat, w_last_mat], 30)
 
     generate_images_in_w_space(ws_slerp, Gs, truncation_psi, output_path,'slerp', False, True, vidname='slerp',class_idx=None, verbose=verbose)
     time_1 = time.time()
 
-    if verbose:
-        print(f'Wrote out slerp.mp4 to {output_path}. Generating the interpolation video took {time_1 - time_0} seconds.')
+    print(f'Wrote out slerp.mp4 to {output_path}. Generating the interpolation video took {time_1 - time_0} seconds.')
 
 
     # GEN FROM W-SPACE: SAVE 10 NOISE IMGS
-    if verbose:
-        print('Generating 10 imgs.')
+    print('Generating 10 noise imgs.')
 
     ws_noise = []
     for i in range(10):
@@ -144,10 +141,10 @@ def process(input_path, output_path, verbose, preloaded_params):
     generate_images_in_w_space(ws_noise, Gs, truncation_psi, output_path, 'noise', False, False, class_idx=None, verbose=verbose)
     time_2 = time.time()
 
-    if verbose:
-        print(f'Wrote out 10 imgs to {output_path}. Generating the 10 images took {time_2 - time_1} seconds.')
+    print(f'Wrote out 10 noise imgs to {output_path}. Generating the 10 images took {time_2 - time_1} seconds.')
 
     # Emit DONE signal
+    print('DONE.')
     Path(f'{output_path}/clonegan_seq_imgs_video.done').touch()
 
 
@@ -174,14 +171,13 @@ def doLoop(preloaded_params, json_path, sleep_time, verbose):
 
 
 def start(preloaded_network, json_path, sleep_time, verbose):
-    doLoop(preloaded_network, json_path, sleep_time, verbose)
-### # ADD BACK IN AFTER DONE TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # try:
-    #     doLoop(preloaded_network, json_path, sleep_time, verbose)
-    # except:
-    #     if verbose:
-    #         print(f'Exception thrown during loop. Re-entering loop.')
-    #     start(preloaded_network, json_path, sleep_time, verbose)
+    # doLoop(preloaded_network, json_path, sleep_time, verbose)
+    try:
+        doLoop(preloaded_network, json_path, sleep_time, verbose)
+    except:
+        if verbose:
+            print(f'Exception thrown during loop. Re-entering loop.')
+        start(preloaded_network, json_path, sleep_time, verbose)
 
 
 def main():
