@@ -9,6 +9,24 @@ from PIL import Image
 import json
 from pathlib import Path
 
+import subprocess
+import pickle
+import re
+
+import scipy
+from numpy import linalg
+
+import dnnlib 
+import dnnlib.tflib as tflib
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import moviepy.editor
+from opensimplex import OpenSimplex
+
+import warnings # mostly numpy warnings for me
+warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.filterwarnings('ignore', category=DeprecationWarning)
+
 
 def slerp(val, low, high):
         out = np.zeros([low.shape[0],low.shape[1],low.shape[2]])
@@ -29,7 +47,7 @@ def slerp_interpolate(zs, steps):
             out.append(slerp(fraction,zs[i],zs[i+1]))
     return out
 
-def generate_images_in_w_space(ws, Gs, truncation_psi,outdir,prefix,save_npy,save_video,framerate=6,vidname="out.mp4",class_idx=None):
+def generate_images_in_w_space(ws, Gs, truncation_psi, outdir, prefix, save_npy, save_video, framerate=6, vidname="out", verbose=False, class_idx=None):
 
     Gs_kwargs = {
         'output_transform': dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True),
@@ -44,20 +62,23 @@ def generate_images_in_w_space(ws, Gs, truncation_psi,outdir,prefix,save_npy,sav
         label[:, class_idx] = 1
 
     for w_idx, w in enumerate(ws):
-        print('Generating image for step %d/%d ...' % (w_idx, len(ws)))
+        if verbose:
+            print('Generating image for step %d/%d ...' % (w_idx, len(ws)))
         noise_rnd = np.random.RandomState(1) # fix noise
         tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.components.synthesis.run(w, **Gs_kwargs) # [minibatch, height, width, channel]
         # images = Gs.run(w,label, **Gs_kwargs) # [minibatch, height, width, channel]
-        PIL.Image.fromarray(images[0], 'RGB').save(f'{outdir}/frames/{prefix}{w_idx:05d}.png')
+        Image.fromarray(images[0], 'RGB').save(f'{outdir}/{prefix}{w_idx:05d}.png')
         if save_npy:
             np.save(f'{outdir}/vectors/{prefix}{w_idx:05d}.npz',w)
             # np.savetxt(f'{outdir}/vectors/{prefix}{w_idx:05d}.txt',w.reshape(w.shape[0], -1))
 
     if save_video:
-        cmd="ffmpeg -y -r {} -i {}/frames/{}%05d.png -vcodec libx264 -pix_fmt yuv420p {}/walk-{}-{}fps.mp4".format(framerate,outdir,prefix,outdir,vidname,framerate)
-        subprocess.call(cmd, shell=True)
-
+        cmd="ffmpeg -loglevel quiet -y -r {} -i {}/{}%05d.png -vcodec libx264 -pix_fmt yuv420p {}/{}.mp4".format(framerate,outdir,prefix,outdir,vidname)
+        if verbose:
+          print(cmd)
+        subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL)
+        
 
 def parse_json(json_path):
     with open(json_path) as f:
@@ -65,6 +86,7 @@ def parse_json(json_path):
     return json_dict
 
 def initialize(network_path, verbose):
+
     # LOAD TF PKL MODEL
     tflib.init_tf()
     with dnnlib.util.open_url(network_path) as fp:
@@ -80,38 +102,46 @@ def initialize(network_path, verbose):
     return Gs, w_user00_mat
 
 def process(input_path, output_path, verbose, preloaded_params):
-
-    if verbose:
-        print(f'Loading input vector from {input_path}.')
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
 
     Gs = preloaded_params[0]
     w_user00_mat = preloaded_params[1]
     
     w_last = np.load(input_path)
+    if verbose:
+        print(f'Loaded input vector from {input_path}.')
+
     
     # RESHAPE FROM (18, 512) to (1,18,512)
     w_last_mat = w_last[np.newaxis, :, :]
 
     truncation_psi = 0.4
 
-    # GEN FROM W-SPACE: SLERP VIDEO
-    time_0 = time.time()
-    ws_slerp = slerp_interpolate([w_user00_mat, w_last_mat], 30)
-    if not os.path.exists(f'{outdir}/frames'):
-        os.makedirs(f'{outdir}/frames')
 
-    generate_images_in_w_space(ws_slerp, Gs_ffhq, truncation_psi, output_path,'slerp_user00', False, True, vidname='slerp-user00-trunc-0.4.mp4',class_idx=None)
+    # GEN FROM W-SPACE: SLERP VIDEO
+    time_0 = time.time()    
+    if verbose:
+        print('Generating spherical interpolation mp4, of 30 frames.')
+
+    ws_slerp = slerp_interpolate([w_user00_mat, w_last_mat], 30)
+
+    generate_images_in_w_space(ws_slerp, Gs, truncation_psi, output_path,'slerp', False, True, vidname='slerp',class_idx=None, verbose=verbose)
     time_1 = time.time()
 
     if verbose:
-        print(f'Wrote out slerp-user00-trunc-0.4.mp4 to {output_path}. Generating the interpolation video took {time_1 - time_0} seconds.')
+        print(f'Wrote out slerp.mp4 to {output_path}. Generating the interpolation video took {time_1 - time_0} seconds.')
+
 
     # GEN FROM W-SPACE: SAVE 10 NOISE IMGS
+    if verbose:
+        print('Generating 10 imgs.')
+
     ws_noise = []
     for i in range(10):
       noise = np.random.normal(0, (i+1)/10.0, w_last_mat.shape)
       ws_noise.append(w_last_mat + noise)
-    generate_images_in_w_space(ws_noise, Gs_ffhq, truncation_psi, output_path, 'noise', False, False, class_idx=None)
+    generate_images_in_w_space(ws_noise, Gs, truncation_psi, output_path, 'noise', False, False, class_idx=None, verbose=verbose)
     time_2 = time.time()
 
     if verbose:
@@ -129,11 +159,10 @@ def doLoop(preloaded_params, json_path, sleep_time, verbose):
             # parse json
             json_dict = parse_json(json_path)
 
-### # ADD BACK IN AFTER DONE TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            # del json
-            # if verbose:
-            #     print(f'Deleting JSON.')
-            # os.remove(json_path)
+            #del json
+            if verbose:
+                print(f'Deleting JSON.')
+            os.remove(json_path)
 
             process(json_dict['input_path'], json_dict['output_path'], verbose, preloaded_params)
 
