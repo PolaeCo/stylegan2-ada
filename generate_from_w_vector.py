@@ -176,7 +176,8 @@ def start(preloaded_network, json_path, sleep_time, verbose):
         doLoop(preloaded_network, json_path, sleep_time, verbose)
     except:
         if verbose:
-            print(f'Exception thrown during loop. Re-entering loop.')
+            print(f'Exception thrown during loop. Deleting JSON and re-entering loop.')
+        os.remove(json_path)
         start(preloaded_network, json_path, sleep_time, verbose)
 
 
