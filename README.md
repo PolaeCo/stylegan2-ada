@@ -1,8 +1,8 @@
 
 # Installation 
 
-* For projector.py, download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
-* For generate_from_vector.py, download the following pretrained models:
+* For `projector.py` and `generate_from_w_vector.py`, download the pretrained FFHQ Faces Model from here: https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl
+* For `generate_from_vector.py`, download the following pretrained models:
     *  Toonify: https://drive.google.com/file/d/1-1fIbIoarJdr3QLKw0lZACwOPbidiJ3G/view?usp=sharing
     *  Metfaces-FFHQ-64: https://drive.google.com/file/d/1jFnpXP3GbXg2opUXAbzPaMXYv1rfhomZ/view?usp=sharing
     *  more soon!
@@ -31,8 +31,27 @@ You can use the command-line tool FFMPEG to extract 3 frames from the video.
 where -i is the name of the input video. The above command will output frames 40, 50, and 79 from the video and save them out as out1.jpg, out2.jpg, and out3.jpg.
 
 
-## 2) generate_from_vector.py
-`!python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
+## 2) generate_from_vector.py, which will take a z-vector and generate 1 img from that z-vector from the specified network pkl.
+`python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
+
+## 3) generate_from_w_vector.py, which will take a w-vector and output 10 images and a slerp .mp4.
+
+`python generate_from_w_vector.py --verbose --sleep_time=1000 --network_path=/content/stylegan2-ada/ffhq.pkl --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
+
+`sleep_time` is in milliseconds. 
+This script contains an infinite loop to check for the JSON at the specificed path. If not found, it will sleep for `sleep_time` milliseconds.
+
+The result 10 imgs will be saved out as `noise00000.png`, `noise00001.png`, ... in the output path specified in the JSON. 
+The result mp4 will be saved out as `slerp.mp4`.
+
+Here is a sample JSON:
+```
+{
+   "input_path": "/content/restyle-encoder/test/w5_vector.npy",
+   "output_path": "/content/stylegan2-ada/out"
+}
+```
+When done, it will also create a file called `clonegan_seq_imgs_video.done` in the output path. 
 
 
 ----------------
