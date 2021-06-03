@@ -12,23 +12,15 @@
 
 ## Usage
 
-### 1) generate_from_w_vector.py
+### 1) generate_noise_images_and_video_from_w_vector.py, which will generate 10 noise imgs and a slerp mp4 from a W-vector.
 
-This will take a w-vector and either:
-
-#### A) Generate 1 exact image, if it is called with the flag `--should_generate_single_image`. 
-This is used in our MIX models, with models like Toonify.
-
-Here is a sample command:  `python generate_from_w_vector.py --should_generate_single_image --network_path=toonify.pkl --verbose --sleep_time=1000 --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
-This will output `exact00000.png` in the output path specified.
-
-#### B) Generate 10 noise images and a slerp .mp4, if it is NOT called with the flag `--should_generate_single_image`.
+This will take a w-vector and generate 10 noise images and a slerp .mp4.
 This is used for CLONEGAN, with the FFHQ network path.
+
+Here is a sample command: `python generate_from_w_vector.py --verbose --sleep_time=1000 --network_path=ffhq.pkl --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
 
 The result 10 imgs will be saved out as `noise00000.png`, `noise00001.png`, ... in the output path specified in the JSON. 
 The result mp4 will be saved out as `slerp.mp4`.
-
-Here is a sample command: `python generate_from_w_vector.py --verbose --sleep_time=1000 --network_path=ffhq.pkl --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
 
 #### Additional notes
 
@@ -47,7 +39,7 @@ When done, it will also create a file called `clonegan_seq_imgs_video.done` in t
 ### 2) generate_exact_image_from_w_vector.py, which will generate 1 exact img from a W-vector.
 `python generate_exact_image_from_w_vector.py --network toonify.pkl --vector_fpath w_vector_user00.npy --output_fpath /content/test/toon-user00.jpg`
 
-This script is NOT on an infinite loop.
+This script is NOT on an infinite loop. This is used in our MIX models, with models like Toonify.
 
 ### 3) [not used]: generate_from_vector.py, which will take a z-vector and generate 1 img from that z-vector from the specified network pkl.
 `python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
