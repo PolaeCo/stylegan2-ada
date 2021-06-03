@@ -44,12 +44,16 @@ Here is a sample JSON:
 ```
 When done, it will also create a file called `clonegan_seq_imgs_video.done` in the output path. 
 
+### 2) generate_from_vector.py, which will generate 1 exact img from a W-vector.
+`python generate_exact_image_from_w_vector.py --network toonify.pkl --vector_fpath w_vector_user00.npy --output_fpath /content/test/toon-user00.jpg`
 
-### 2) generate_from_vector.py, which will take a z-vector and generate 1 img from that z-vector from the specified network pkl.
+This script is NOT on an infinite loop.
+
+### 3) [not used]: generate_from_vector.py, which will take a z-vector and generate 1 img from that z-vector from the specified network pkl.
 `python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
 
 
-### 3) projector.py, which will output an mp4 projection video.
+### 3) [not used]: projector.py, which will output an mp4 projection video.
 `python projector.py --output_path="./projection" --image_path=/content/user_00_512.jpg --network=https://nvlabs-fi-cdn.nvidia.com/stylegan2-ada/pretrained/ffhq.pkl`
 
 #### Additional Optional Args
