@@ -41,7 +41,7 @@ When done, it will also create a file called `clonegan_seq_imgs_video.done` in t
 
 This script is NOT on an infinite loop. This is used in our MIX models, with models like Toonify.
 
-### 3) [not used]: generate_from_vector.py, which will take a z-vector and generate 1 img from that z-vector from the specified network pkl.
+### 3) [not used]: generate_from_vector.py, which will take a Z-vector and generate 1 img from that Z-vector from the specified network pkl.
 `python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
 
 
