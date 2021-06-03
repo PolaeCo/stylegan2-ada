@@ -85,7 +85,7 @@ def parse_json(json_path):
       json_dict = json.load(f)
     return json_dict
 
-def initialize(network_path, verbose):
+def initialize(network_path, verbose, should_generate_single_image):
 
     # LOAD TF PKL MODEL
     tflib.init_tf()
@@ -101,7 +101,7 @@ def initialize(network_path, verbose):
     
     return Gs, w_user00_mat
 
-def process(input_path, output_path, verbose, preloaded_params):
+def process(input_path, output_path, verbose, should_generate_single_image, preloaded_params):
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -118,37 +118,51 @@ def process(input_path, output_path, verbose, preloaded_params):
 
     truncation_psi = 0.4
 
+    if should_generate_single_image:
 
-    # GEN FROM W-SPACE: SLERP VIDEO
-    time_0 = time.time()    
-    print('Generating spherical interpolation mp4, of 30 frames...')
+        # GEN FROM W-SPACE: SAVE 1 EXACT IMG
+        time_0 = time.time()
+        print('Generating 1 exact img...')
 
-    ws_slerp = slerp_interpolate([w_user00_mat, w_last_mat], 30)
+        generate_images_in_w_space([w_last_mat], Gs, truncation_psi, output_path, 'exact', False, False, class_idx=None, verbose=verbose)
+        time_1 = time.time()
 
-    generate_images_in_w_space(ws_slerp, Gs, truncation_psi, output_path,'slerp', False, True, vidname='slerp',class_idx=None, verbose=verbose)
-    time_1 = time.time()
-
-    print(f'Wrote out slerp.mp4 to {output_path}. Generating the interpolation video took {time_1 - time_0} seconds.')
+        print(f'Wrote out exact00000.png to {output_path}. Generating the single image took {time_1 - time_0} seconds.')
 
 
-    # GEN FROM W-SPACE: SAVE 10 NOISE IMGS
-    print('Generating 10 noise imgs...')
+    else: # Generate slerp video and 10 noise imgs
 
-    ws_noise = []
-    for i in range(10):
-      noise = np.random.normal(0, (i+1)/10.0, w_last_mat.shape)
-      ws_noise.append(w_last_mat + noise)
-    generate_images_in_w_space(ws_noise, Gs, truncation_psi, output_path, 'noise', False, False, class_idx=None, verbose=verbose)
-    time_2 = time.time()
+        # GEN FROM W-SPACE: SLERP VIDEO
+        time_0 = time.time()    
+        print('Generating spherical interpolation mp4, of 30 frames...')
 
-    print(f'Wrote out 10 noise imgs to {output_path}. Generating the 10 images took {time_2 - time_1} seconds.')
+        ws_slerp = slerp_interpolate([w_user00_mat, w_last_mat], 30)
+
+        generate_images_in_w_space(ws_slerp, Gs, truncation_psi, output_path,'slerp', False, True, vidname='slerp',class_idx=None, verbose=verbose)
+        time_1 = time.time()
+
+        print(f'Wrote out slerp.mp4 to {output_path}. Generating the interpolation video took {time_1 - time_0} seconds.')
+
+
+        # GEN FROM W-SPACE: SAVE 10 NOISE IMGS
+        print('Generating 10 noise imgs...')
+
+        ws_noise = []
+        for i in range(10):
+          noise = np.random.normal(0, (i+1)/10.0, w_last_mat.shape)
+          ws_noise.append(w_last_mat + noise)
+        generate_images_in_w_space(ws_noise, Gs, truncation_psi, output_path, 'noise', False, False, class_idx=None, verbose=verbose)
+        time_2 = time.time()
+
+        print(f'Wrote out 10 noise imgs to {output_path}. Generating the 10 images took {time_2 - time_1} seconds.')
+  
 
     # Emit DONE signal
     print('DONE.')
     Path(f'{output_path}/clonegan_seq_imgs_video.done').touch()
 
 
-def doLoop(preloaded_params, json_path, sleep_time, verbose):
+def doLoop(preloaded_params, json_path, sleep_time, verbose, should_generate_single_image):
         
     while True:
 
@@ -161,7 +175,7 @@ def doLoop(preloaded_params, json_path, sleep_time, verbose):
                 print(f'Deleting JSON.')
             os.remove(json_path)
 
-            process(json_dict['input_path'], json_dict['output_path'], verbose, preloaded_params)
+            process(json_dict['input_path'], json_dict['output_path'], verbose, should_generate_single_image, preloaded_params)
 
         else:
             SLEEP_TIME_IN_SECS = sleep_time/1000.0
@@ -170,15 +184,15 @@ def doLoop(preloaded_params, json_path, sleep_time, verbose):
             time.sleep(SLEEP_TIME_IN_SECS)
 
 
-def start(preloaded_network, json_path, sleep_time, verbose):
-    # doLoop(preloaded_network, json_path, sleep_time, verbose)
+def start(preloaded_network, json_path, sleep_time, verbose, should_generate_single_image):
+    #doLoop(preloaded_network, json_path, sleep_time, verbose, should_generate_single_image)
     try:
-        doLoop(preloaded_network, json_path, sleep_time, verbose)
+        doLoop(preloaded_network, json_path, sleep_time, verbose, should_generate_single_image)
     except:
         if verbose:
             print(f'Exception thrown during loop. Deleting JSON and re-entering loop.')
         os.remove(json_path)
-        start(preloaded_network, json_path, sleep_time, verbose)
+        start(preloaded_network, json_path, sleep_time, verbose, should_generate_single_image)
 
 
 def main():
@@ -188,6 +202,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
+    parser.add_argument('--should_generate_single_image', action='store_true')
     parser.add_argument('--network_path',     help='Network filepath as a .pt file', dest='network_path', required=True)
     parser.add_argument('--json_path',      help='File path to json arg file', dest='json_path', required=True)
     parser.add_argument('--sleep_time',      help='Sleep time in milliseconds', dest='sleep_time', type=int, default=50)
@@ -195,8 +210,8 @@ def main():
 
     args = parser.parse_args()
 
-    preloaded_params = initialize(args.network_path, args.verbose)
-    start(preloaded_params, args.json_path, args.sleep_time, args.verbose)
+    preloaded_params = initialize(args.network_path, args.verbose, args.should_generate_single_image)
+    start(preloaded_params, args.json_path, args.sleep_time, args.verbose, args.should_generate_single_image)
 
 #----------------------------------------------------------------------------
 
