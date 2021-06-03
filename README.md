@@ -12,15 +12,28 @@
 
 ## Usage
 
-### 1) generate_from_w_vector.py, which will take a w-vector and output 10 images and a slerp .mp4.
+### 1) generate_from_w_vector.py
 
-`python generate_from_w_vector.py --verbose --sleep_time=1000 --network_path=/content/stylegan2-ada/ffhq.pkl --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
+This will take a w-vector and either:
 
-`sleep_time` is in milliseconds. 
-This script contains an infinite loop to check for the JSON at the specificed path. If not found, it will sleep for `sleep_time` milliseconds.
+#### A) Generate 1 exact image, if it is called with the flag `--should_generate_single_image`. 
+This is used in our MIX models, with models like Toonify.
+
+Here is a sample command:  `python generate_from_w_vector.py --should_generate_single_image --network_path=toonify.pkl --verbose --sleep_time=1000 --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
+This will output `exact00000.png` in the output path specified.
+
+#### B) Generate 10 noise images and a slerp .mp4, if it is NOT called with the flag `--should_generate_single_image`.
+This is used for CLONEGAN, with the FFHQ network path.
 
 The result 10 imgs will be saved out as `noise00000.png`, `noise00001.png`, ... in the output path specified in the JSON. 
 The result mp4 will be saved out as `slerp.mp4`.
+
+Here is a sample command: `python generate_from_w_vector.py --verbose --sleep_time=1000 --network_path=ffhq.pkl --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
+
+#### Additional notes
+
+`sleep_time` is in milliseconds. 
+This script contains an infinite loop to check for the JSON at the specified path. If not found, it will sleep for `sleep_time` milliseconds.
 
 Here is a sample JSON:
 ```
