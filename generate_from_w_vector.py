@@ -198,12 +198,12 @@ def start(preloaded_network, json_path, sleep_time, verbose, should_generate_sin
 def main():
 
     parser = argparse.ArgumentParser(
-        description='Return the 10 images and an mp4 from the inputted vector file.',
+        description='Generate outputs from a w-vector file.',
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     parser.add_argument('--should_generate_single_image', action='store_true')
-    parser.add_argument('--network_path',     help='Network filepath as a .pt file', dest='network_path', required=True)
+    parser.add_argument('--network_path',     help='Network filepath as a .pkl file', dest='network_path', required=True)
     parser.add_argument('--json_path',      help='File path to json arg file', dest='json_path', required=True)
     parser.add_argument('--sleep_time',      help='Sleep time in milliseconds', dest='sleep_time', type=int, default=50)
     parser.add_argument('--verbose', action='store_true')
