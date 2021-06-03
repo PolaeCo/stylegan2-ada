@@ -44,7 +44,7 @@ Here is a sample JSON:
 ```
 When done, it will also create a file called `clonegan_seq_imgs_video.done` in the output path. 
 
-### 2) generate_from_vector.py, which will generate 1 exact img from a W-vector.
+### 2) generate_exact_image_from_w_vector.py, which will generate 1 exact img from a W-vector.
 `python generate_exact_image_from_w_vector.py --network toonify.pkl --vector_fpath w_vector_user00.npy --output_fpath /content/test/toon-user00.jpg`
 
 This script is NOT on an infinite loop.
