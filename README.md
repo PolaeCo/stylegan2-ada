@@ -40,6 +40,7 @@ When done, it will also create a file called `clonegan_seq_imgs_video.done` in t
 `python generate_exact_image_from_w_vector.py --network toonify.pkl --vector_fpath w_vector_user00.npy --output_fpath /content/test/toon-user00.jpg`
 
 This script is NOT on an infinite loop. This is used in our MIX models, with models like Toonify.
+There is an optional flag `--dry-run`, which will NOT generate the image, but instead go through the motions and pre-compile things like the  TensorFlow plugin "fused_bias_act.cu" and "upfirdn_2d.cu".
 
 ### 3) [not used]: generate_from_vector.py, which will take a Z-vector and generate 1 img from that Z-vector from the specified network pkl.
 `python generate_from_vector.py --network toonify.pkl --vector_fpath sample_files/user00_dlatents.npz  --output_fpath dlatents-toon-user00.jpg`
