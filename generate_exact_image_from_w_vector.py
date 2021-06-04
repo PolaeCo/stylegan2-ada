@@ -30,7 +30,7 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
 
-def generate_images_in_w_space(ws, Gs, truncation_psi, outdir, prefix, save_npy, save_video, framerate=6, vidname="out", verbose=False, class_idx=None, output_fpath=None):
+def generate_images_in_w_space(ws, Gs, truncation_psi, outdir, prefix, save_npy, save_video, framerate=6, vidname="out", verbose=False, class_idx=None, output_fpath=None, is_dry_run=False):
 
     Gs_kwargs = {
         'output_transform': dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True),
@@ -47,27 +47,31 @@ def generate_images_in_w_space(ws, Gs, truncation_psi, outdir, prefix, save_npy,
     for w_idx, w in enumerate(ws):
         if verbose:
             print('Generating image for step %d/%d ...' % (w_idx, len(ws)))
+
         noise_rnd = np.random.RandomState(1) # fix noise
         tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
-        images = Gs.components.synthesis.run(w, **Gs_kwargs) # [minibatch, height, width, channel]
-        # images = Gs.run(w,label, **Gs_kwargs) # [minibatch, height, width, channel]
 
-        if output_fpath is None:
-            output_fpath = f'{outdir}/{prefix}{w_idx:05d}.png'
+        # If we want to actually generate 
+        if not is_dry_run:
+            images = Gs.components.synthesis.run(w, **Gs_kwargs) # [minibatch, height, width, channel]
 
-        Image.fromarray(images[0], 'RGB').save(output_fpath)
-        if save_npy:
-            np.save(f'{outdir}/vectors/{prefix}{w_idx:05d}.npz',w)
-            # np.savetxt(f'{outdir}/vectors/{prefix}{w_idx:05d}.txt',w.reshape(w.shape[0], -1))
+            if output_fpath is None:
+                output_fpath = f'{outdir}/{prefix}{w_idx:05d}.png'
 
-    if save_video:
-        cmd="ffmpeg -loglevel quiet -y -r {} -i {}/{}%05d.png -vcodec libx264 -pix_fmt yuv420p {}/{}.mp4".format(framerate,outdir,prefix,outdir,vidname)
-        if verbose:
-          print(cmd)
-        subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL)
+            Image.fromarray(images[0], 'RGB').save(output_fpath)
+            if save_npy:
+                np.save(f'{outdir}/vectors/{prefix}{w_idx:05d}.npz',w)
+                # np.savetxt(f'{outdir}/vectors/{prefix}{w_idx:05d}.txt',w.reshape(w.shape[0], -1))
+
+# No need for video for this job
+    # if save_video:
+    #     cmd="ffmpeg -loglevel quiet -y -r {} -i {}/{}%05d.png -vcodec libx264 -pix_fmt yuv420p {}/{}.mp4".format(framerate,outdir,prefix,outdir,vidname)
+    #     if verbose:
+    #       print(cmd)
+    #     subprocess.call(cmd, shell=True, stdout=subprocess.DEVNULL)
         
 
-def generate_exact_image_from_w_vector(network_pkl: str, vector_fpath: str, output_fpath: str):
+def generate_exact_image_from_w_vector(network_pkl: str, vector_fpath: str, output_fpath: str, is_dry_run: bool):
 
     tflib.init_tf()
     with dnnlib.util.open_url(network_pkl) as fp:
@@ -89,7 +93,7 @@ def generate_exact_image_from_w_vector(network_pkl: str, vector_fpath: str, outp
     if not os.path.exists(output_basedir):
         os.makedirs(output_basedir)
 
-    generate_images_in_w_space(ws, Gs, truncation_psi, outdir, prefix, save_npy, save_video, framerate=6, vidname="out", verbose=False, class_idx=None, output_fpath=output_fpath)
+    generate_images_in_w_space(ws, Gs, truncation_psi, outdir, prefix, save_npy, save_video, framerate=6, vidname="out", verbose=False, class_idx=None, output_fpath=output_fpath, is_dry_run=is_dry_run)
 
 
 
@@ -111,6 +115,8 @@ def main():
     parser.add_argument('--network',     help='Network pickle filename', dest='network_pkl', required=True)
     parser.add_argument('--vector_fpath',      help='The W vector to generate from, as an .npy file.', dest='vector_fpath', required=True)
     parser.add_argument('--output_fpath',      help='The filename of the output image', required=True, dest='output_fpath', metavar='DIR')
+    parser.add_argument('--dry-run',      help='Do not actually generate the image, but go through the m otions of everything else. I.e; load Tensorflow fused_bias_act.cu, etc.', action='store_true', dest='is_dry_run')
+
 
     time_before = time.time()
     generate_exact_image_from_w_vector(**vars(parser.parse_args()))
