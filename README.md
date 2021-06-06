@@ -23,9 +23,9 @@ The result 10 imgs will be saved out as `noise00000.png`, `noise00001.png`, ... 
 The result mp4 will be saved out as `slerp.mp4`.
 
 #### Additional notes
-
-`sleep_time` is in milliseconds. 
-This script contains an infinite loop to check for the JSON at the specified path. If not found, it will sleep for `sleep_time` milliseconds.
+* `--steps` is an optional arg to specify the number of steps (frames) in the slerp video. If not specified, the default is 30 steps/frames. For example, you may type `--steps 80` to generate 80 steps instead of the default 30 steps.
+* `sleep_time` is in milliseconds. 
+* This script contains an infinite loop to check for the JSON at the specified path. If not found, it will sleep for `sleep_time` milliseconds.
 
 Here is a sample JSON:
 ```
