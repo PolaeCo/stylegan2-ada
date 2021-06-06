@@ -101,7 +101,7 @@ def initialize(network_path, verbose):
     
     return Gs, w_user00_mat
 
-def process(input_path, output_path, verbose, preloaded_params):
+def process(input_path, output_path, verbose, preloaded_params, num_steps):
     if not os.path.exists(output_path):
         os.makedirs(output_path)
 
@@ -121,9 +121,9 @@ def process(input_path, output_path, verbose, preloaded_params):
 
     # GEN FROM W-SPACE: SLERP VIDEO
     time_0 = time.time()    
-    print('Generating spherical interpolation mp4, of 30 frames...')
+    print(f'Generating spherical interpolation mp4, of {num_steps} frames...')
 
-    ws_slerp = slerp_interpolate([w_user00_mat, w_last_mat], 30)
+    ws_slerp = slerp_interpolate([w_user00_mat, w_last_mat], num_steps)
 
     generate_images_in_w_space(ws_slerp, Gs, truncation_psi, output_path,'slerp', False, True, vidname='slerp',class_idx=None, verbose=verbose)
     time_1 = time.time()
@@ -148,7 +148,7 @@ def process(input_path, output_path, verbose, preloaded_params):
     Path(f'{output_path}/clonegan_seq_imgs_video.done').touch()
 
 
-def doLoop(preloaded_params, json_path, sleep_time, verbose):
+def doLoop(preloaded_params, json_path, sleep_time, verbose, num_steps):
         
     while True:
 
@@ -161,7 +161,7 @@ def doLoop(preloaded_params, json_path, sleep_time, verbose):
                 print(f'Deleting JSON.')
             os.remove(json_path)
 
-            process(json_dict['input_path'], json_dict['output_path'], verbose, preloaded_params)
+            process(json_dict['input_path'], json_dict['output_path'], verbose, preloaded_params, num_steps)
 
         else:
             SLEEP_TIME_IN_SECS = sleep_time/1000.0
@@ -170,15 +170,15 @@ def doLoop(preloaded_params, json_path, sleep_time, verbose):
             time.sleep(SLEEP_TIME_IN_SECS)
 
 
-def start(preloaded_network, json_path, sleep_time, verbose):
-    # doLoop(preloaded_network, json_path, sleep_time, verbose)
+def start(preloaded_network, json_path, sleep_time, verbose, num_steps):
+    # doLoop(preloaded_network, json_path, sleep_time, verbose, num_steps)
     try:
-        doLoop(preloaded_network, json_path, sleep_time, verbose)
+        doLoop(preloaded_network, json_path, sleep_time, verbose, num_steps)
     except:
         if verbose:
             print(f'Exception thrown during loop. Deleting JSON and re-entering loop.')
         os.remove(json_path)
-        start(preloaded_network, json_path, sleep_time, verbose)
+        start(preloaded_network, json_path, sleep_time, verbose, num_steps)
 
 
 def main():
@@ -192,11 +192,12 @@ def main():
     parser.add_argument('--json_path',      help='File path to json arg file', dest='json_path', required=True)
     parser.add_argument('--sleep_time',      help='Sleep time in milliseconds', dest='sleep_time', type=int, default=50)
     parser.add_argument('--verbose', action='store_true')
+    parser.add_argument('--steps',  help='Number of steps in the slerp video', dest='num_steps', type=int, default=30, required=False)
 
     args = parser.parse_args()
 
     preloaded_params = initialize(args.network_path, args.verbose)
-    start(preloaded_params, args.json_path, args.sleep_time, args.verbose)
+    start(preloaded_params, args.json_path, args.sleep_time, args.verbose, args.num_steps)
 
 #----------------------------------------------------------------------------
 
