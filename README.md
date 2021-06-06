@@ -17,7 +17,7 @@
 This will take a w-vector and generate 10 noise images and a slerp .mp4.
 This is used for CLONEGAN, with the FFHQ network path.
 
-Here is a sample command: `python generate_from_w_vector.py --verbose --sleep_time=1000 --network_path=ffhq.pkl --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
+Here is a sample command: `python generate_noise_images_and_video_from_w_vector.py --verbose --sleep_time=1000 --network_path=ffhq.pkl --json_path=/content/stylegan2-ada/generate_from_w_vector_input.json`
 
 The result 10 imgs will be saved out as `noise00000.png`, `noise00001.png`, ... in the output path specified in the JSON. 
 The result mp4 will be saved out as `slerp.mp4`.
