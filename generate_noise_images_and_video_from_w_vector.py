@@ -95,9 +95,16 @@ def initialize(network_path, verbose):
     # LOAD USER00's W-VECTOR
     w_user00 = np.load('w5-user00.npy')
     w_user00_mat = w_user00[np.newaxis, :, :]
-
+    
     if verbose:
         print(f'Loaded network from {network_path}.')
+        print(f'Initializing CUDA plugins by generating from user00\'s w-vector.')
+    
+    #generate user 00
+    generate_images_in_w_space([w_user00_mat], Gs, 0.7, '/tmp','init', False, False, vidname='init',class_idx=None, verbose=verbose)
+
+    if verbose:
+        print(f'Done initializing.')
     
     return Gs, w_user00_mat
 
